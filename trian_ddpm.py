@@ -19,18 +19,10 @@ def set_seed(seed: int = 42):
 
 
 def denorm(x: torch.Tensor) -> torch.Tensor:
-    """Convert images from [-1, 1] to [0, 1] for saving."""
     return (x.clamp(-1, 1) + 1) / 2
 
 
 def extract(a: torch.Tensor, t: torch.Tensor, x_shape: torch.Size) -> torch.Tensor:
-    """
-    Extract values from a 1D schedule tensor at batch timesteps.
-
-    a: [T]
-    t: [B]
-    return: [B, 1, 1, 1] for broadcasting over image tensors
-    """
     out = a.gather(0, t)
     return out.reshape(t.shape[0], *((1,) * (len(x_shape) - 1)))
 
@@ -46,10 +38,6 @@ class DiffusionSchedule:
 
 
 def q_sample(x0: torch.Tensor, t: torch.Tensor, noise: torch.Tensor, schedule: DiffusionSchedule) -> torch.Tensor:
-    """
-    Closed-form forward noising:
-        x_t = sqrt(alpha_bar_t) x_0 + sqrt(1 - alpha_bar_t) epsilon
-    """
     sqrt_ab = extract(schedule.sqrt_alpha_bars, t, x0.shape)
     sqrt_omab = extract(schedule.sqrt_one_minus_alpha_bars, t, x0.shape)
     return sqrt_ab * x0 + sqrt_omab * noise
@@ -94,11 +82,6 @@ class ResBlock(nn.Module):
 
 
 class SmallUNet(nn.Module):
-    """
-    A small time-conditioned U-Net for MNIST noise prediction.
-    Input:  x_t with shape [B, 1, 28, 28]
-    Output: predicted epsilon with shape [B, 1, 28, 28]
-    """
     def __init__(self, time_dim: int = 128):
         super().__init__()
         self.time_mlp = nn.Sequential(
@@ -149,11 +132,6 @@ class SmallUNet(nn.Module):
 
 @torch.no_grad()
 def p_sample(model: nn.Module, x: torch.Tensor, t_idx: int, schedule: DiffusionSchedule) -> torch.Tensor:
-    """
-    One DDPM reverse sampling step:
-        mu = 1/sqrt(alpha_t) * (x_t - beta_t/sqrt(1-alpha_bar_t) * eps_theta)
-        x_{t-1} = mu + sqrt(beta_t) z
-    """
     b = x.shape[0]
     t = torch.full((b,), t_idx, device=x.device, dtype=torch.long)
 

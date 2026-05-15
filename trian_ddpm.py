@@ -93,14 +93,14 @@ class SmallUNet(nn.Module):
 
         self.in_conv = nn.Conv2d(1, 32, kernel_size=3, padding=1)
 
-        self.down0 = ResBlock(32, 32, time_dim)      # 28 x 28
-        self.down1 = ResBlock(32, 64, time_dim)      # 14 x 14
-        self.down2 = ResBlock(64, 128, time_dim)     # 7 x 7
+        self.down0 = ResBlock(32, 32, time_dim)
+        self.down1 = ResBlock(32, 64, time_dim)
+        self.down2 = ResBlock(64, 128, time_dim)
 
-        self.mid = ResBlock(128, 128, time_dim)      # 7 x 7
+        self.mid = ResBlock(128, 128, time_dim)
 
-        self.up1 = ResBlock(128 + 64, 64, time_dim)  # 14 x 14
-        self.up2 = ResBlock(64 + 32, 32, time_dim)   # 28 x 28
+        self.up1 = ResBlock(128 + 64, 64, time_dim)
+        self.up2 = ResBlock(64 + 32, 32, time_dim)
 
         self.out_norm = group_norm(32)
         self.out_conv = nn.Conv2d(32, 1, kernel_size=3, padding=1)
@@ -109,13 +109,13 @@ class SmallUNet(nn.Module):
         temb = self.time_mlp(t)
 
         x = self.in_conv(x)
-        h0 = self.down0(x, temb)  # [B, 32, 28, 28]
+        h0 = self.down0(x, temb)
 
-        h = F.avg_pool2d(h0, kernel_size=2)  # [B, 32, 14, 14]
-        h1 = self.down1(h, temb)             # [B, 64, 14, 14]
+        h = F.avg_pool2d(h0, kernel_size=2)
+        h1 = self.down1(h, temb)
 
-        h = F.avg_pool2d(h1, kernel_size=2)  # [B, 64, 7, 7]
-        h2 = self.down2(h, temb)             # [B, 128, 7, 7]
+        h = F.avg_pool2d(h1, kernel_size=2)
+        h2 = self.down2(h, temb)
 
         h = self.mid(h2, temb)
 
@@ -158,7 +158,7 @@ def sample(model: nn.Module, n: int, schedule: DiffusionSchedule, device: torch.
 
     trajectory = []
     if save_steps is not None:
-        trajectory.append((schedule.timesteps, x.detach().cpu()))  # pure noise x_T
+        trajectory.append((schedule.timesteps, x.detach().cpu()))
 
     for t_idx in reversed(range(schedule.timesteps)):
         x = p_sample(model, x, t_idx, schedule)
@@ -235,7 +235,7 @@ def main():
 
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,)),  # [0, 1] -> [-1, 1]
+        transforms.Normalize((0.5,), (0.5,)),
     ])
 
     train_dataset = datasets.MNIST(
